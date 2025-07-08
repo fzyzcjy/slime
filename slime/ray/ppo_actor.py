@@ -9,10 +9,7 @@ import torch
 import torch.distributed as dist
 
 
-if torch.version.hip:
-    from vllm.device_allocator.cumem import CuMemAllocator
-else:
-    from cumem_allocator import CuMemAllocator
+from torch_memory_saver import torch_memory_saver
 
 
 # somehow we need to import this, otherwise the update weight will stuck
@@ -60,6 +57,8 @@ class TrainRayActor(RayActor):
         # os.environ["LOCAL_RANK"] = str(ray.get_gpu_ids()[0])
         os.environ["LOCAL_RANK"] = str(ray.get_gpu_ids()[0])
 
+        torch_memory_saver.hook_mode = "torch"
+
     def init(self, args, role, with_ref=False):
         self.args = args
         self.role = role
@@ -85,9 +84,7 @@ class TrainRayActor(RayActor):
             Timer().start("train_wait")
             return 0
 
-        allocator = CuMemAllocator.get_instance() if self.args.offload else None
-
-        with allocator.use_memory_pool(tag="model") if allocator else nullcontext():
+        with torch_memory_saver.region(tag="model", enable_cpu_backup=True) if self.args.offload else nullcontext():
             (self.model, self.optimizer, self.opt_param_scheduler, loaded_rollout_id) = (
                 megatron_utils.initialize_model_and_optimizer(args, with_optimizer=True)
             )
@@ -170,8 +167,8 @@ class TrainRayActor(RayActor):
         print_memory(f"before offload model")
         self.update_cpu_params_dict()
 
-        allocator = CuMemAllocator.get_instance()
-        allocator.sleep(offload_tags=tags)
+        for tag in tags:
+            torch_memory_saver.pause(tag=tag)
 
         clear_memory()
         print_memory(f"after offload model")
@@ -185,8 +182,8 @@ class TrainRayActor(RayActor):
         if isinstance(tags, str):
             tags = (tags,)
 
-        allocator = CuMemAllocator.get_instance()
-        allocator.wake_up(tags)
+        for tag in tags:
+            torch_memory_saver.resume(tag=tag)
 
         clear_memory()
         print_memory("after wake_up model")
