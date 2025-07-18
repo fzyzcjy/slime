@@ -8,26 +8,10 @@ async def generate_rollout_async(args, rollout_id: int, data_buffer) -> list[lis
 
         # wait for the generation to finish
         done, pendings = await asyncio.wait(state.pendings, return_when=asyncio.FIRST_COMPLETED)
-        for task in done:
-            group: list[Sample] = task.result()
 
-            if do_print:
-                print(
-                    f"First rollout sample: {[group[0].prompt + group[0].response]}, label: {group[0].label}, reward: {group[0].reward}",
-                    flush=True,
-                )
-                do_print = False
-
-            assert len(group) == args.n_samples_per_prompt
-            if dynamic_filter is not None and not dynamic_filter(args, group):
-                # state.remaining_batch_size -= 1 # <-- no need for this
-                continue
-
-            # add the samples to the data
-            # NOTE: here we have not stored all the unused samples back to the data buffer.
-            if len(data) < target_data_size:
-                data.append(group)
-                pbar.update(args.n_samples_per_prompt)
+        filtered_done = _postprocess_done_data(done, max_num_outputs=target_data_size-len(data))
+        pbar.update(args.n_samples_per_prompt * len(filtered_done))
+        data += filtered_done
 
     await abort(args, rollout_id, data_buffer)
     ...
@@ -52,3 +36,28 @@ def _submit_generate_tasks(min_size: int):
                     )
                 )
             )
+
+def _postprocess_done_data(done, max_num_outputs):
+    data = []
+
+    for task in done:
+        group: list[Sample] = task.result()
+
+        if do_print:
+            print(
+                f"First rollout sample: {[group[0].prompt + group[0].response]}, label: {group[0].label}, reward: {group[0].reward}",
+                flush=True,
+            )
+            do_print = False
+
+        assert len(group) == args.n_samples_per_prompt
+        if dynamic_filter is not None and not dynamic_filter(args, group):
+            # state.remaining_batch_size -= 1 # <-- no need for this
+            continue
+
+        # add the samples to the data
+        # NOTE: here we have not stored all the unused samples back to the data buffer.
+        if len(data) < max_num_outputs:
+            data.append(group)
+
+    return data
