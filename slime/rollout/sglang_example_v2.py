@@ -2,11 +2,12 @@ from slime.utils.types import Sample
 
 async def generate_rollout_async(args, rollout_id: int, data_buffer) -> list[list[Sample]]:
     data = []
+    pendings = []
     while len(data) < target_data_size:
-        pendings = _submit_generate_tasks(min_size=target_data_size-state.remaining_batch_size)
+        pendings += _submit_generate_tasks(min_size=target_data_size - len(pendings))
 
         # wait for the generation to finish
-        done, state.pendings = await asyncio.wait(state.pendings, return_when=asyncio.FIRST_COMPLETED)
+        done, pendings = await asyncio.wait(state.pendings, return_when=asyncio.FIRST_COMPLETED)
         for task in done:
             group: list[Sample] = task.result()
 
@@ -19,7 +20,7 @@ async def generate_rollout_async(args, rollout_id: int, data_buffer) -> list[lis
 
             assert len(group) == args.n_samples_per_prompt
             if dynamic_filter is not None and not dynamic_filter(args, group):
-                state.remaining_batch_size -= 1
+                # state.remaining_batch_size -= 1 # <-- no need for this
                 continue
 
             # add the samples to the data
