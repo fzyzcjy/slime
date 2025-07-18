@@ -29,6 +29,9 @@ async def generate_rollout_async(args, rollout_id: int, data_buffer) -> list[lis
                 data.append(group)
                 pbar.update(args.n_samples_per_prompt)
 
+    await abort(args, rollout_id, data_buffer)
+    ...
+
 def _submit_generate_tasks(min_size: int):
     pendings = []
     # this part is copied from genereate_rollout_async
