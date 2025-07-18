@@ -7,13 +7,13 @@ async def generate_rollout_async(args, rollout_id: int, data_buffer) -> list[lis
         pendings += _submit_generate_tasks(min_size=target_data_size - len(pendings))
 
         # wait for the generation to finish
-        done, pendings = await asyncio.wait(state.pendings, return_when=asyncio.FIRST_COMPLETED)
+        raw_done, pendings = await asyncio.wait(pendings, return_when=asyncio.FIRST_COMPLETED)
+        filtered_done = _postprocess_done_data(raw_done, max_num_outputs=target_data_size-len(data))
 
-        filtered_done = _postprocess_done_data(done, max_num_outputs=target_data_size-len(data))
         pbar.update(args.n_samples_per_prompt * len(filtered_done))
         data += filtered_done
 
-    await abort(args, rollout_id, data_buffer)
+    await abort(pendings)
     ...
 
 def _submit_generate_tasks(min_size: int):
@@ -57,7 +57,9 @@ def _postprocess_done_data(done, max_num_outputs):
 
         # add the samples to the data
         # NOTE: here we have not stored all the unused samples back to the data buffer.
-        if len(data) < max_num_outputs:
-            data.append(group)
+        if len(data) >= max_num_outputs:
+            continue
+
+        data.append(group)
 
     return data
