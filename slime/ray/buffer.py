@@ -303,5 +303,7 @@ class Buffer:
 
 
 def _dump_rollout_data(dir_out, data, rollout_id: int, evaluation: bool):
+    phase = 'eval' if evaluation else 'train'
     df = pl.DataFrame([sample.to_dict() for sample in data])
-    df.write_parquet(Path(dir_out) / "rollout" / f"rollout={rollout_id}__phase={'eval' if evaluation else 'train'}.parquet")
+    df = df.with_columns(rollout=pl.lit(rollout_id), phase=pl.lit(phase))
+    df.write_parquet(Path(dir_out) / "rollout" / f"{rollout_id}_{phase}.parquet")
