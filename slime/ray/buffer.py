@@ -2,6 +2,7 @@ import copy
 import logging
 import os
 import pickle
+from pathlib import Path
 from typing import Any, Union
 import polars as pl
 
@@ -244,7 +245,7 @@ class Buffer:
     def _set_data(self, data: Union[list[Sample], Any], evaluation=False):
         data_pool = self.eval_data_pool if evaluation else self.train_data_pool
         if self.args.dump_data:
-            _dump_rollout_data(data, rollout_id=self.rollout_id, evaluation=evaluation)
+            _dump_rollout_data(self.args.dump_data, data, rollout_id=self.rollout_id, evaluation=evaluation)
         if not evaluation:
             if self.args.save_debug_rollout_data:
                 pickle.dump(
@@ -301,7 +302,6 @@ class Buffer:
             self.dataset.shuffle(self.epoch_id)
 
 
-def _dump_rollout_data(data, rollout_id: int, evaluation: bool):
+def _dump_rollout_data(dir_out, data, rollout_id: int, evaluation: bool):
     df = pl.DataFrame([sample.to_dict() for sample in data])
-    df.write_parquet()
-    TODO
+    df.write_parquet(Path(dir_out) / "rollout" / f"rollout={rollout_id}__phase={'eval' if evaluation else 'train'}.parquet")
