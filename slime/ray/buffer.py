@@ -3,6 +3,7 @@ import logging
 import os
 import pickle
 from typing import Any, Union
+import polars as pl
 
 import ray
 import torch
@@ -301,4 +302,6 @@ class Buffer:
 
 
 def _dump_rollout_data(data, rollout_id: int, evaluation: bool):
+    df = pl.DataFrame([sample.to_dict() for sample in data])
+    df.write_parquet()
     TODO
