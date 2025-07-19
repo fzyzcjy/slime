@@ -617,6 +617,15 @@ def get_slime_extra_args_provider(add_custom_arguments=None):
         # debug
         def add_debug_arguments(parser):
             parser.add_argument(
+                "--dump-data",
+                type=str,
+                default=None,
+                help=(
+                    "Dump all data for post-hoc analysis and visualization. "
+                    "The file will be saved to subfolders of the provided directory."
+                ),
+            )
+            parser.add_argument(
                 "--save-debug-rollout-data",
                 type=str,
                 default=None,

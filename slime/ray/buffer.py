@@ -242,6 +242,8 @@ class Buffer:
 
     def _set_data(self, data: Union[list[Sample], Any], evaluation=False):
         data_pool = self.eval_data_pool if evaluation else self.train_data_pool
+        if self.args.dump_data:
+            _dump_rollout_data(data, rollout_id=self.rollout_id, evaluation=evaluation)
         if not evaluation:
             if self.args.save_debug_rollout_data:
                 pickle.dump(
@@ -296,3 +298,7 @@ class Buffer:
 
         if self.args.rollout_global_dataset and self.args.rollout_shuffle:
             self.dataset.shuffle(self.epoch_id)
+
+
+def _dump_rollout_data(data, rollout_id: int, evaluation: bool):
+    TODO
