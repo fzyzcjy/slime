@@ -306,6 +306,7 @@ def _dump_rollout_data(dir_out, data, rollout_id: int, evaluation: bool):
     phase = 'eval' if evaluation else 'train'
     path = Path(dir_out) / "rollout" / f"{rollout_id}_{phase}.parquet"
     path.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Dump rollout data to {path}")
 
     df = pl.DataFrame([sample.to_dict() for sample in data])
     df = df.with_columns(rollout=pl.lit(rollout_id), phase=pl.lit(phase))
