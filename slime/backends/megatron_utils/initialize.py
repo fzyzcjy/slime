@@ -1,14 +1,31 @@
-import os
 import random
-from datetime import timedelta
 
 import numpy as np
 import torch
 import torch.distributed as dist
-import wandb
 from megatron.core import mpu, tensor_parallel
 from megatron.core.num_microbatches_calculator import init_num_microbatches_calculator
 from megatron.training.global_vars import _build_tokenizer, set_args
+
+import wandb
+
+GLOO_GROUP = None
+
+
+def _init_gloo_group():
+    """Initialize Gloo group for distributed communication."""
+    global GLOO_GROUP
+    if GLOO_GROUP is None:
+        GLOO_GROUP = dist.new_group(backend="gloo")
+    return GLOO_GROUP
+
+
+def get_gloo_group():
+    """Get the Gloo group for distributed communication."""
+    global GLOO_GROUP
+    if GLOO_GROUP is None:
+        raise RuntimeError("Gloo group has not been initialized. Call _init_gloo_group() first.")
+    return GLOO_GROUP
 
 
 def _set_random_seed(
@@ -32,22 +49,6 @@ def _set_random_seed(
 
 def _initialize_distributed(args, get_embedding_ranks=None, get_position_embedding_ranks=None):
     """Initialize torch.distributed and core model parallel."""
-
-    local_rank = int(os.environ.get("LOCAL_RANK", 0))
-    torch.cuda.set_device(f"cuda:{local_rank}")
-
-    dist.init_process_group(
-        backend=args.distributed_backend,
-        timeout=timedelta(minutes=args.distributed_timeout_minutes),
-    )
-
-    args.rank = dist.get_rank()
-    args.world_size = dist.get_world_size()
-
-    # set current device
-    args.local_rank = args.rank % torch.cuda.device_count()
-    torch.cuda.set_device(f"cuda:{args.local_rank}")
-
     # Set the tensor model-parallel, pipeline model-parallel, and
     # data-parallel communicators.
     mpu.initialize_model_parallel(
@@ -76,6 +77,10 @@ def init(args):
     set_args(args)
     # Pytorch distributed.
     _initialize_distributed(args)
+    _init_gloo_group()
+
+    # https://github.com/NVIDIA/Megatron-LM/issues/1563
+    assert np.__version__.startswith("1."), "Megatron does not support numpy 2.x"
 
     # Random seeds for reproducibility.
     if args.rank == 0:

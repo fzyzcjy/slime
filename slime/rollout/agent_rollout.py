@@ -4,9 +4,9 @@ from typing import Any, Dict, List, Optional
 
 import aiohttp
 import requests
-import wandb
 from transformers import AutoTokenizer
 
+import wandb
 from slime.ray.buffer import Buffer
 from slime.utils.async_utils import run
 from slime.utils.mask_utils import MultiTurnLossMaskGenerator
@@ -185,17 +185,15 @@ async def get_rollout_data(
 
 def start_rollout(api_base_url: str, args, metadata):
     url = f"{api_base_url}/start_rollout"
-    if args.rollout_input_file is None:
-        raise ValueError("rollout_input_file is required")
     print(f"metadata: {metadata}")
     finished_groups_instance_id_list = [item for sublist in metadata.values() for item in sublist]
     payload = {
         "num_process": str(getattr(args, "rollout_num_process", 100)),
-        "num_epoch": str(getattr(args, "rollout_num_epoch", 3)),
+        "num_epoch": str(args.num_epoch or 3),
         "remote_engine_url": f"http://{args.sglang_router_ip}:{args.sglang_router_port}",
         "remote_buffer_url": args.agent_rollout_buffer_url,
         "task_type": args.rollout_task_type,
-        "input_file": args.rollout_input_file,
+        "input_file": args.prompt_data,
         "num_repeat_per_sample": str(args.n_samples_per_prompt),
         "max_tokens": str(args.rollout_max_response_len),
         "sampling_params": {
@@ -282,6 +280,7 @@ async def generate_agent_rollout(
 
     print("finally get rollout data with length: ", len(results))
     sample_results = []
+
     for i, record in enumerate(results):
         oai_messages = record["messages"]
 
@@ -298,7 +297,11 @@ async def generate_agent_rollout(
                 tokens=token_ids,
                 response_length=response_length,
                 reward=record["reward"],
-                status=Sample.Status.COMPLETED,
+                status=(
+                    Sample.Status.COMPLETED
+                    if "finish_reason" not in record["extra_info"] or record["extra_info"]["finish_reason"] != "length"
+                    else Sample.Status.TRUNCATED
+                ),
                 loss_mask=loss_mask,
                 metadata={**record["extra_info"], "raw_reward": record["raw_reward"]},
             )

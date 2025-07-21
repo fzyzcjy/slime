@@ -6,10 +6,10 @@ from typing import Any, Union
 
 import ray
 import torch
-import wandb
 from transformers import AutoTokenizer
 
-from slime.utils.data import JsonlDataset
+import wandb
+from slime.utils.data import Dataset
 from slime.utils.misc import load_function
 from slime.utils.types import Sample
 
@@ -46,7 +46,7 @@ class Buffer:
 
         if args.rollout_global_dataset:
             tokenizer = AutoTokenizer.from_pretrained(args.hf_checkpoint, trust_remote_code=True)
-            self.dataset = JsonlDataset(
+            self.dataset = Dataset(
                 args.prompt_data,
                 tokenizer=tokenizer,
                 max_length=args.rollout_max_prompt_len,
@@ -177,16 +177,20 @@ class Buffer:
 
     def generate(self, rollout_id, evaluation=False):
         self.rollout_id = rollout_id
+        if self.args.debug_train_only and evaluation:
+            # if debug train only, we don't generate evaluation data
+            return
+
         if not evaluation and self.args.load_debug_rollout_data:
             data = pickle.load(
                 open(self.args.load_debug_rollout_data.format(rollout_id=rollout_id), "rb"),
             )
-            data = [Sample(**sample) for sample in data]
+            data = [Sample.from_dict(sample) for sample in data]
         else:
             generate_rollout = self.eval_generate_rollout if evaluation else self.generate_rollout
             data = generate_rollout(self.args, rollout_id, self, evaluation=evaluation)
             # flatten the data if it is a list of lists
-            if isinstance(data[0], list):
+            if not evaluation and isinstance(data[0], list):
                 data = sum(data, [])
 
         self._set_data(data, evaluation=evaluation)
@@ -241,7 +245,7 @@ class Buffer:
         if not evaluation:
             if self.args.save_debug_rollout_data:
                 pickle.dump(
-                    [sample.__dict__ for sample in data],
+                    [sample.to_dict() for sample in data],
                     open(self.args.save_debug_rollout_data.format(rollout_id=self.rollout_id), "wb"),
                 )
             data = self._convert_samples_to_train_data(data)

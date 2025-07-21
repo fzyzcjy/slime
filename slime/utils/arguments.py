@@ -1,8 +1,7 @@
 import os
 
-from slime.backends.megatron_utils import _vocab_size_with_padding
-from slime.backends.megatron_utils import parse_args as megatron_parse_args
-from slime.backends.megatron_utils import validate_args as megatron_validate_args
+from transformers import AutoConfig
+
 from slime.backends.sglang_utils.arguments import add_sglang_arguments
 from slime.backends.sglang_utils.arguments import validate_args as sglang_validate_args
 
@@ -521,14 +520,14 @@ def get_slime_extra_args_provider(add_custom_arguments=None):
             parser.add_argument(
                 "--kl-loss-type",
                 type=str,
-                choices=["kl", "low_var_kl"],
+                choices=["kl", "k2", "k3", "low_var_kl"],
                 default="kl",
-                help="Choose KL loss type: kl, low_var_kl",
+                help="Choose KL loss type: kl, k2, k3 low_var_kl",
             )
             parser.add_argument(
                 "--advantage-estimator",
                 type=str,
-                choices=["grpo"],
+                choices=["grpo", "reinforce_plus_plus", "reinforce_plus_plus_baseline"],
                 default="grpo",
             )
             parser.add_argument(
@@ -546,6 +545,7 @@ def get_slime_extra_args_provider(add_custom_arguments=None):
             )
             parser.add_argument("--kl-loss-coef", type=float, default=0.0, help="KL penalty in PPO")
             parser.add_argument("--entropy-coef", type=float, default=0.0, help="Entropy loss coef")
+            parser.add_argument("--gamma", type=float, default=1.0, help="Discount factor for rewards in REINFORCE++.")
             parser.add_argument("--normalize-advantages", action="store_true", default=False)
             parser.add_argument(
                 "--disable-grpo-std-normalization",
@@ -711,7 +711,7 @@ def get_slime_extra_args_provider(add_custom_arguments=None):
                 help="URL for the agent rollout buffer",
             )
             parser.add_argument(
-                "--update-rollout-weights-interval",
+                "--update-weights-interval",
                 type=int,
                 default=1,
                 help="Interval for updating the weights of the agent",
@@ -800,8 +800,17 @@ def get_slime_extra_args_provider(add_custom_arguments=None):
 
 
 def parse_args(add_custom_arguments=None):
+    from slime.backends.megatron_utils import _vocab_size_with_padding
+    from slime.backends.megatron_utils import parse_args as megatron_parse_args
+    from slime.backends.megatron_utils import validate_args as megatron_validate_args
+
     add_slime_arguments = get_slime_extra_args_provider(add_custom_arguments)
     args = megatron_parse_args(extra_args_provider=add_slime_arguments)
+
+    if args.hf_checkpoint:
+        hf_config = AutoConfig.from_pretrained(args.hf_checkpoint, trust_remote_code=True)
+        hf_validate_args(args, hf_config)
+
     args.rank = 0
     args.world_size = args.actor_num_nodes * args.actor_num_gpus_per_node
 
@@ -851,6 +860,12 @@ def parse_args(add_custom_arguments=None):
 
     assert not (args.kl_coef != 0 and args.kl_loss_coef != 0), "Only one of kl_coef and kl_loss_coef can be set"
 
+    if args.advantage_estimator in ["reinforce_plus_plus", "reinforce_plus_plus_baseline"]:
+        assert args.normalize_advantages, (
+            "The 'reinforce_plus_plus' and 'reinforce_plus_plus_baseline' advantage estimators "
+            "require advantage normalization. Please add `--normalize-advantages` to your command."
+        )
+
     if args.use_dynamic_batch_size:
         assert args.max_tokens_per_gpu is not None, "max_tokens_per_gpu must be set when use_dynamic_batch_size is set"
         if args.log_probs_max_tokens_per_gpu is None:
@@ -870,6 +885,11 @@ def parse_args(add_custom_arguments=None):
         args.debug_train_only = True
 
     if args.debug_rollout_only:
+        if args.colocate and args.rollout_num_gpus is None:
+            args.rollout_num_gpus = args.actor_num_gpus_per_node * args.actor_num_nodes
+        else:
+            args.actor_num_gpus_per_node = min(8, args.rollout_num_gpus)
+            args.actor_num_nodes = args.rollout_num_gpus // args.actor_num_gpus_per_node
         args.colocate = False
         args.offload = False
 
@@ -956,3 +976,20 @@ def parse_args(add_custom_arguments=None):
     sglang_validate_args(args)
 
     return args
+
+
+def hf_validate_args(args, hf_config):
+    equal = lambda x, y: x == y
+    for hf_config_name, megatron_config_name, compare_fn in [
+        ("hidden_size", "hidden_size", equal),
+        ("num_attention_heads", "num_attention_heads", equal),
+        ("num_hidden_layers", "num_layers", equal),
+        ("intermediate_size", "ffn_hidden_size", equal),
+        ("tie_word_embeddings", "untie_embeddings_and_output_weights", lambda x, y: not x == y),
+        ("rms_norm_eps", "norm_epsilon", equal),
+    ]:
+        if hasattr(hf_config, hf_config_name):
+            assert compare_fn(getattr(hf_config, hf_config_name), getattr(args, megatron_config_name)), (
+                f"{hf_config_name} in hf config {getattr(hf_config, hf_config_name)} is not equal to "
+                f"{megatron_config_name} {getattr(args, megatron_config_name)}, please check the config."
+            )
