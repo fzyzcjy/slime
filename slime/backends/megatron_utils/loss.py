@@ -2,6 +2,7 @@ from typing import Union
 
 import torch
 from megatron.core import mpu
+import torch.distributed as dist
 
 from slime.utils.distributed_utils import distributed_masked_whiten
 from slime.utils.misc import load_function
@@ -15,7 +16,6 @@ from slime.utils.ppo_utils import (
     get_reinforce_plus_plus_returns,
 )
 
-from ..utils.data import get_local_storage, set_local_storage
 from .cp_utils import get_logits_and_tokens_offset_with_cp, get_sum_of_sample_mean
 
 
@@ -114,14 +114,14 @@ def get_log_probs_and_entropy(
     return res
 
 
-def compute_advantages_and_returns(args):
-    log_probs: list[torch.Tensor] = get_local_storage("log_probs")
-    ref_log_probs: list[torch.Tensor] = get_local_storage("ref_log_probs")
-    rewards: list[float] = get_local_storage("rewards")
-    values: Union[None, list[torch.Tensor]] = get_local_storage("values")
-    response_lengths: list[int] = get_local_storage("response_lengths")
-    loss_masks: list[torch.Tensor] = get_local_storage("loss_masks")
-    total_lengths: list[int] = get_local_storage("total_lengths")
+def compute_advantages_and_returns(args, rollout_data):
+    log_probs: list[torch.Tensor] = rollout_data.get("log_probs", None)
+    ref_log_probs: list[torch.Tensor] = rollout_data.get("ref_log_probs", None)
+    rewards: list[float] = rollout_data.get("rewards", None)
+    values: Union[None, list[torch.Tensor]] = rollout_data.get("values", None)
+    response_lengths: list[int] = rollout_data.get("response_lengths", None)
+    loss_masks: list[torch.Tensor] = rollout_data.get("loss_masks", None)
+    total_lengths: list[int] = rollout_data.get("total_lengths", None)
 
     if log_probs is None:
         return
@@ -184,33 +184,42 @@ def compute_advantages_and_returns(args):
             all_masks = torch.cat(loss_masks)
         else:
             mask_chunks = []
-            for i in range(len(loss_masks)):
+            for i in range(len(advantages)):
+                total_len = total_lengths[i]
+                response_len = response_lengths[i]
+                prompt_len = total_len - response_len
+
+                _, _, _, token_offsets = get_logits_and_tokens_offset_with_cp(total_len, response_len)
+
+                # Convert global offsets to response-space offsets
+                s0, e0 = token_offsets[0]
+                s1, e1 = token_offsets[1]
+                res_s0, res_e0 = max(0, s0 - prompt_len), max(0, e0 - prompt_len)
+                res_s1, res_e1 = max(0, s1 - prompt_len), max(0, e1 - prompt_len)
+
+                local_mask_parts = []
                 full_mask = loss_masks[i]
-                total_len, response_len, prompt_len = (
-                    total_lengths[i],
-                    response_lengths[i],
-                    total_lengths[i] - response_lengths[i],
-                )
+                if res_e0 > res_s0:
+                    local_mask_parts.append(full_mask[res_s0:res_e0])
+                if res_e1 > res_s1:
+                    local_mask_parts.append(full_mask[res_s1:res_e1])
 
-                _, _, _, my_offsets = get_logits_and_tokens_offset_with_cp(total_len, response_len)
+                # Concatenate the parts to form the final mask chunk for this rank and this sequence
+                local_mask_chunk = torch.cat(local_mask_parts) if local_mask_parts else torch.tensor([], device=all_advs.device, dtype=full_mask.dtype)
+                mask_chunks.append(local_mask_chunk)
 
-                s_start, e_start = my_offsets[0][0] - prompt_len, my_offsets[0][1] - prompt_len
-                s_end, e_end = my_offsets[1][0] - prompt_len, my_offsets[1][1] - prompt_len
-
-                mask_chunk = torch.cat([full_mask[s_start:e_start], full_mask[s_end:e_end]])
-                mask_chunks.append(mask_chunk)
             all_masks = torch.cat(mask_chunks)
 
-        assert (
-            all_advs.size() == all_masks.size()
-        ), f"Shape mismatch before whitening: advantages {all_advs.size()}, masks {all_masks.size()}"
+        if all_masks.numel() > 0:
+            assert all_advs.size() == all_masks.size(), \
+                f"Shape mismatch before whitening: advantages {all_advs.size()}, masks {all_masks.size()}"
 
-        whitened_advs_flat = distributed_masked_whiten(all_advs, all_masks, shift_mean=True)
-        chunk_lengths = [chunk.size(0) for chunk in advantages]
-        advantages = list(torch.split(whitened_advs_flat, chunk_lengths))
+            whitened_advs_flat = distributed_masked_whiten(all_advs, all_masks, shift_mean=True)
+            chunk_lengths = [chunk.size(0) for chunk in advantages]
+            advantages = list(torch.split(whitened_advs_flat, chunk_lengths))
 
-    set_local_storage("advantages", advantages)
-    set_local_storage("returns", returns)
+    rollout_data["advantages"] = advantages
+    rollout_data["returns"] = returns
 
 
 def policy_loss_function(args, batch, logits, sum_of_sample_mean):
