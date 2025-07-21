@@ -6,10 +6,7 @@ import torch
 import torch.distributed as dist
 from tqdm import tqdm
 
-if torch.version.hip:
-    from vllm.device_allocator.cumem import CuMemAllocator
-else:
-    from cumem_allocator import CuMemAllocator
+from torch_memory_saver import torch_memory_saver
 
 from megatron.core import mpu
 from sglang.srt.utils import MultiprocessingSerializer
@@ -38,6 +35,7 @@ from .update_weight_utils import (
 class MegatronTrainRayActor(TrainRayActor):
     def init(self, args, role, with_ref=False):
         super().init(args, role, with_ref)
+        torch_memory_saver.hook_mode = "torch"
 
         wandb_run_id = init(args)
         self.args.wandb_run_id = wandb_run_id
@@ -123,8 +121,8 @@ class MegatronTrainRayActor(TrainRayActor):
         print_memory(f"before offload model")
         self.update_cpu_params_dict(self.weights["actor"])
 
-        allocator = CuMemAllocator.get_instance()
-        allocator.sleep(offload_tags=tags)
+        for tag in tags:
+            torch_memory_saver.pause(tag=tag)
 
         clear_memory()
         print_memory(f"after offload model")
@@ -138,8 +136,8 @@ class MegatronTrainRayActor(TrainRayActor):
         if isinstance(tags, str):
             tags = (tags,)
 
-        allocator = CuMemAllocator.get_instance()
-        allocator.wake_up(tags)
+        for tag in tags:
+            torch_memory_saver.resume(tag=tag)
 
         clear_memory()
         print_memory("after wake_up model")
