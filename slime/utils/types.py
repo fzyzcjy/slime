@@ -17,7 +17,7 @@ class Sample:
     response: str = ""
     response_length: int = 0
     label: Optional[str] = None
-    reward: Optional[Union[float, dict[str, float]]] = None
+    reward: Optional[Union[float, dict[str, any]]] = None
     loss_mask: Optional[list[int]] = None
 
     class Status(Enum):
