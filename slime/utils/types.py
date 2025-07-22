@@ -42,6 +42,7 @@ class Sample:
     def get_reward_value(self, args) -> float:
         return self.reward if not args.reward_key else self.reward[args.reward_key]
 
+
 @dataclass
 class ParamInfo:
     name: str
