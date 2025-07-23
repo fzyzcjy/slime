@@ -1,3 +1,5 @@
+import pickle
+
 import ray
 import torch
 import torch.distributed as dist
@@ -250,6 +252,9 @@ class MegatronTrainRayActor(TrainRayActor):
                     train_data_iterator,
                     train_num_microbatches,
                 )
+
+        if (path := self.args.save_debug_train_data) is not None:
+            pickle.dump(rollout_data, open(path.format(rollout_id=self.rollout_id), "wb"))
 
         log_perf_data(rollout_id, self.args)
         Timer().start("train_wait")
