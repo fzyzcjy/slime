@@ -213,6 +213,7 @@ class Buffer:
             # we could use key to select the reward.
             "rewards": [sample.get_reward_value(self.args) for sample in samples],
             "truncated": [1 if sample.status == Sample.Status.TRUNCATED else 0 for sample in samples],
+            "sample_indices": [sample.index for sample in samples],
         }
 
         # loss mask
