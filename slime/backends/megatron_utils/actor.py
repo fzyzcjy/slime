@@ -254,7 +254,15 @@ class MegatronTrainRayActor(TrainRayActor):
                 )
 
         if (path := self.args.save_debug_train_data) is not None:
-            pickle.dump(rollout_data, open(path.format(rollout_id=self.rollout_id), "wb"))
+            rank = torch.distributed.get_rank()
+            pickle.dump(
+                dict(
+                    rollout_id=self.rollout_id,
+                    rank=rank,
+                    rollout_data=rollout_data,
+                ),
+                open(path.format(rollout_id=self.rollout_id, rank=rank), "wb"),
+            )
 
         log_perf_data(rollout_id, self.args)
         Timer().start("train_wait")
