@@ -1,4 +1,5 @@
 import pickle
+from pathlib import Path
 
 import ray
 import torch
@@ -253,15 +254,17 @@ class MegatronTrainRayActor(TrainRayActor):
                     train_num_microbatches,
                 )
 
-        if (path := self.args.save_debug_train_data) is not None:
+        if (path_template := self.args.save_debug_train_data) is not None:
             rank = torch.distributed.get_rank()
+            path = Path(path_template.format(rollout_id=self.rollout_id, rank=rank))
+            path.parent.mkdir(parents=True, exist_ok=True)
             pickle.dump(
                 dict(
                     rollout_id=self.rollout_id,
                     rank=rank,
                     rollout_data=rollout_data,
                 ),
-                open(path.format(rollout_id=self.rollout_id, rank=rank), "wb"),
+                path.open("wb"),
             )
 
         log_perf_data(rollout_id, self.args)
