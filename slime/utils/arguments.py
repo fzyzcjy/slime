@@ -662,6 +662,15 @@ def get_slime_extra_args_provider(add_custom_arguments=None):
                     "This is useful for debugging the rollout generation function."
                 ),
             )
+            parser.add_argument(
+                "--save-debug-train-data",
+                type=str,
+                default=None,
+                help=(
+                    "Save the train data to this path for debugging. "
+                    "The file will be saved to `save_debug_train_data.format(rollout_id)`."
+                ),
+            )
             return parser
 
         def add_network_arguments(parser):
