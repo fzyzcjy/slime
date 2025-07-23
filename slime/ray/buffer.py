@@ -185,7 +185,7 @@ class Buffer:
         if not evaluation and self.args.load_debug_rollout_data:
             data = pickle.load(
                 open(self.args.load_debug_rollout_data.format(rollout_id=rollout_id), "rb"),
-            )
+            )["samples"]
             data = [Sample.from_dict(sample) for sample in data]
         else:
             generate_rollout = self.eval_generate_rollout if evaluation else self.generate_rollout
@@ -245,7 +245,10 @@ class Buffer:
             if (path_template := self.args.save_debug_rollout_data) is not None:
                 path = Path(path_template.format(rollout_id=self.rollout_id))
                 path.parent.mkdir(parents=True, exist_ok=True)
-                pickle.dump([sample.to_dict() for sample in data], path.open("wb"))
+                pickle.dump(dict(
+                    rollout_id=self.rollout_id,
+                    samples=[sample.to_dict() for sample in data],
+                ), path.open("wb"))
             data = self._convert_samples_to_train_data(data)
         data_pool[self.rollout_id] = data
 
