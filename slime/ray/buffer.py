@@ -257,7 +257,7 @@ class Buffer:
                         rollout_id=self.rollout_id,
                         samples=[sample.to_dict() for sample in data],
                     ),
-                    path.open("wb"),
+                    path,
                 )
             data = self._convert_samples_to_train_data(data)
         data_pool[self.rollout_id] = data

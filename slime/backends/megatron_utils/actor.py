@@ -266,7 +266,7 @@ class MegatronTrainRayActor(TrainRayActor):
                     rank=rank,
                     rollout_data=rollout_data,
                 ),
-                path.open("wb"),
+                path,
             )
 
         log_perf_data(rollout_id, self.args)
