@@ -2,6 +2,7 @@ import copy
 import logging
 import os
 import pickle
+from pathlib import Path
 from typing import Any, Union
 
 import ray
@@ -241,11 +242,10 @@ class Buffer:
     def _set_data(self, data: Union[list[Sample], Any], evaluation=False):
         data_pool = self.eval_data_pool if evaluation else self.train_data_pool
         if not evaluation:
-            if self.args.save_debug_rollout_data:
-                pickle.dump(
-                    [sample.to_dict() for sample in data],
-                    open(self.args.save_debug_rollout_data.format(rollout_id=self.rollout_id), "wb"),
-                )
+            if (path_template := self.args.save_debug_rollout_data) is not None:
+                path = Path(path_template.format(rollout_id=self.rollout_id))
+                path.parent.mkdir(parents=True, exist_ok=True)
+                pickle.dump([sample.to_dict() for sample in data], path.open("wb"))
             data = self._convert_samples_to_train_data(data)
         data_pool[self.rollout_id] = data
 
