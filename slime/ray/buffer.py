@@ -245,10 +245,13 @@ class Buffer:
             if (path_template := self.args.save_debug_rollout_data) is not None:
                 path = Path(path_template.format(rollout_id=self.rollout_id))
                 path.parent.mkdir(parents=True, exist_ok=True)
-                pickle.dump(dict(
-                    rollout_id=self.rollout_id,
-                    samples=[sample.to_dict() for sample in data],
-                ), path.open("wb"))
+                pickle.dump(
+                    dict(
+                        rollout_id=self.rollout_id,
+                        samples=[sample.to_dict() for sample in data],
+                    ),
+                    path.open("wb"),
+                )
             data = self._convert_samples_to_train_data(data)
         data_pool[self.rollout_id] = data
 

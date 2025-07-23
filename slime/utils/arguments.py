@@ -675,9 +675,7 @@ def get_slime_extra_args_provider(add_custom_arguments=None):
                 "--dump-details",
                 type=str,
                 default=None,
-                help=(
-                    "Dump all details of training for post-hoc analysis and visualization."
-                ),
+                help=("Dump all details of training for post-hoc analysis and visualization."),
             )
             return parser
 
