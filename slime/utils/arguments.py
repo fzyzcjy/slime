@@ -671,6 +671,14 @@ def get_slime_extra_args_provider(add_custom_arguments=None):
                     "The file will be saved to `save_debug_train_data.format(rollout_id)`."
                 ),
             )
+            parser.add_argument(
+                "--dump-details",
+                type=str,
+                default=None,
+                help=(
+                    "Dump all details of training for post-hoc analysis and visualization."
+                ),
+            )
             return parser
 
         def add_network_arguments(parser):
