@@ -47,6 +47,11 @@ class Buffer:
 
         if args.rollout_global_dataset:
             tokenizer = AutoTokenizer.from_pretrained(args.hf_checkpoint, trust_remote_code=True)
+
+            # TODO move (during the refactor)
+            if (d := args.dump_details) is not None:
+                tokenizer.save_pretrained(Path(d) / "tokenizer")
+
             self.dataset = Dataset(
                 args.prompt_data,
                 tokenizer=tokenizer,
