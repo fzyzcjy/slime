@@ -260,7 +260,7 @@ class MegatronTrainRayActor(TrainRayActor):
             path = Path(path_template.format(rollout_id=rollout_id, rank=rank))
             print(f"Save debug train data to {path}")
             path.parent.mkdir(parents=True, exist_ok=True)
-            pickle.dump(
+            torch.save(
                 dict(
                     rollout_id=rollout_id,
                     rank=rank,

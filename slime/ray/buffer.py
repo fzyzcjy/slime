@@ -188,7 +188,7 @@ class Buffer:
             return
 
         if not evaluation and self.args.load_debug_rollout_data:
-            data = pickle.load(
+            data = torch.load(
                 open(self.args.load_debug_rollout_data.format(rollout_id=rollout_id), "rb"),
             )["samples"]
             data = [Sample.from_dict(sample) for sample in data]
@@ -252,7 +252,7 @@ class Buffer:
                 path = Path(path_template.format(rollout_id=self.rollout_id))
                 print(f"Save debug rollout data to {path}")
                 path.parent.mkdir(parents=True, exist_ok=True)
-                pickle.dump(
+                torch.save(
                     dict(
                         rollout_id=self.rollout_id,
                         samples=[sample.to_dict() for sample in data],
