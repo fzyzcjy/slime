@@ -254,9 +254,11 @@ class MegatronTrainRayActor(TrainRayActor):
                     train_num_microbatches,
                 )
 
+        # TODO extract to a function during refactor
         if (path_template := self.args.save_debug_train_data) is not None:
             rank = torch.distributed.get_rank()
             path = Path(path_template.format(rollout_id=self.rollout_id, rank=rank))
+            print(f"Save debug train data to {path}")
             path.parent.mkdir(parents=True, exist_ok=True)
             pickle.dump(
                 dict(

@@ -247,8 +247,10 @@ class Buffer:
     def _set_data(self, data: Union[list[Sample], Any], evaluation=False):
         data_pool = self.eval_data_pool if evaluation else self.train_data_pool
         if not evaluation:
+            # TODO extract to a function during refactor
             if (path_template := self.args.save_debug_rollout_data) is not None:
                 path = Path(path_template.format(rollout_id=self.rollout_id))
+                print(f"Save debug rollout data to {path}")
                 path.parent.mkdir(parents=True, exist_ok=True)
                 pickle.dump(
                     dict(
