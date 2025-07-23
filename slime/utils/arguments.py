@@ -888,6 +888,10 @@ def parse_args(add_custom_arguments=None):
     if args.eval_reward_key is None:
         args.eval_reward_key = args.reward_key
 
+    if args.dump_details is not None:
+        args.save_debug_rollout_data = f"{args.dump_details}/rollout_data/{{rollout_id}}.pt"
+        args.save_debug_train_data = f"{args.dump_details}/train_data/{{rollout_id}}.pt"
+
     if args.load_debug_rollout_data is not None:
         print(
             f"load_debug_rollout_data {args.load_debug_rollout_data} is set, "
