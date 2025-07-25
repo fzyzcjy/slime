@@ -216,38 +216,7 @@ class Buffer:
         return len(self.buffer)
 
     def save(self, rollout_id):
-        if not self.args.rollout_global_dataset:
-            return
-
-        state_dict = {
-            "sample_offset": self.sample_offset,
-            "epoch_id": self.epoch_id,
-            "sample_index": self.sample_index,
-            "metadata": self.metadata,
-        }
-        path = os.path.join(self.args.save, f"rollout/global_dataset_state_dict_{rollout_id}.pt")
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        torch.save(state_dict, path)
+        self.data_source.save(rollout_id)
 
     def load(self, rollout_id=None):
-        if not self.args.rollout_global_dataset:
-            return
-
-        if self.args.load is None:
-            return
-
-        path = os.path.join(self.args.load, f"rollout/global_dataset_state_dict_{rollout_id}.pt")
-        if not os.path.exists(path):
-            print(f"Checkpoint {path} does not exist.")
-            return
-
-        print(f"load metadata from {path}")
-        print(f"load metadata: {self.metadata}")
-        state_dict = torch.load(path)
-        self.sample_offset = state_dict.get("sample_offset", 0)
-        self.epoch_id = state_dict.get("epoch_id", 0)
-        self.sample_index = state_dict.get("sample_index", 0)
-        self.metadata = state_dict.get("metadata", {})
-
-        if self.args.rollout_global_dataset and self.args.rollout_shuffle:
-            self.dataset.shuffle(self.epoch_id)
+        self.data_source.load(rollout_id)
