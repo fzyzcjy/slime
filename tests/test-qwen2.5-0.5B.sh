@@ -110,7 +110,7 @@ MISC_ARGS=(
 )
 
 # launch the master node of ray in container
-ray start --head --node-ip-address ${MASTER_ADDR} --num-gpus 8 --disable-usage-stats
+ray start --head --node-ip-address ${MASTER_ADDR} --num-gpus 4 --disable-usage-stats
 
 ray job submit --address="http://127.0.0.1:8265" \
    --runtime-env-json='{
@@ -121,7 +121,7 @@ ray job submit --address="http://127.0.0.1:8265" \
    }' \
    -- python3 train.py \
    --actor-num-nodes 1 \
-   --actor-num-gpus-per-node 8 \
+   --actor-num-gpus-per-node 4 \
    --colocate \
    ${MODEL_ARGS[@]} \
    ${CKPT_ARGS[@]} \
