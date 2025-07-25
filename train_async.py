@@ -2,12 +2,14 @@ import ray
 
 from slime.ray.placement_group import create_actor_group, create_placement_groups, create_rollout_manager
 from slime.utils.arguments import parse_args
+from slime.utils.wandb_utils import init_wandb_primary
 
 
 def train(args):
     assert not args.colocate, "Colocation is not supported for async training."
     # allocate the GPUs
     pgs = create_placement_groups(args)
+    wandb_run_id = init_wandb_primary(args)
 
     actor_model = create_actor_group(args, pgs["actor"])
 
