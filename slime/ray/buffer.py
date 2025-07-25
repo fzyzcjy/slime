@@ -37,8 +37,6 @@ class Buffer:
         else:
             self.buffer_filter = load_function(self.args.buffer_filter_path)
 
-        self.train_data_pool = {}
-        self.eval_data_pool = {}
         self.epoch_id = 0
         self.sample_index = 0
         self.sample_offset = 0
