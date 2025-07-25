@@ -69,7 +69,7 @@ def _initialize_distributed(args, get_embedding_ranks=None, get_position_embeddi
     )
 
 
-def init(args, wandb_run_id):
+def init(args):
     set_args(args)
     # Pytorch distributed.
     _initialize_distributed(args)
@@ -105,9 +105,12 @@ def init(args, wandb_run_id):
         custom_init(args)
 
     # TODO maybe_move
-    if args.use_wandb and (
+    if args.use_wandb and is_main_rank():
+        init_wandb_secondary(wandb_run_id)
+
+def is_main_rank():
+    return (
         mpu.get_data_parallel_rank(with_context_parallel=True) == 0
         and mpu.get_tensor_model_parallel_rank() == 0
         and mpu.get_pipeline_model_parallel_rank() == mpu.get_pipeline_model_parallel_world_size() - 1
-    ):
-        init_wandb_secondary(wandb_run_id)
+    )
