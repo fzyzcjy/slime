@@ -273,7 +273,7 @@ class MegatronTrainRayActor(TrainRayActor):
             return
 
         # TODO: is logging enough?
-        log_eval_data(rollout_id, self.args, self.data_buffer)
+        log_eval_data(rollout_id, self.args, rollout_data_ref)
 
     def save_model(self, iteration, with_optimizer=True):
         if self.args.debug_rollout_only:
