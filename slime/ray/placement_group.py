@@ -114,5 +114,5 @@ def create_actor_group(args, pg):
     return actor_model
 
 
-def create_rollout_group(args, pg):
+def create_rollout_manager(args, pg):
     return RolloutManager(args, pg)

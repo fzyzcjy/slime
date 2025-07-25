@@ -1,6 +1,6 @@
 import ray
 
-from slime.ray.placement_group import create_actor_group, create_placement_groups, create_rollout_group
+from slime.ray.placement_group import create_actor_group, create_placement_groups, create_rollout_manager
 from slime.utils.arguments import parse_args
 
 
@@ -12,7 +12,7 @@ def train(args):
     actor_model = create_actor_group(args, pgs["actor"])
 
     # create the rollout generator, with sglang engines inside.
-    rollout_manager = create_rollout_group(args, pgs["rollout"])
+    rollout_manager = create_rollout_manager(args, pgs["rollout"])
 
     # calculate num_rollout from num_epoch
     num_rollout_per_epoch = None
