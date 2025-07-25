@@ -2,7 +2,7 @@ import copy
 import logging
 import os
 from pathlib import Path
-from typing import Any, Union
+from typing import Union
 
 import ray
 import torch
@@ -213,7 +213,6 @@ class Buffer:
             data = self._convert_samples_to_train_data(data)
 
         return ray.put(data)
-
 
     def get_data(self, rollout_id, evaluation=False):
         data_pool = self.train_data_pool if not evaluation else self.eval_data_pool
