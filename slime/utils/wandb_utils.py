@@ -4,7 +4,7 @@ import wandb
 
 
 def init_wandb_primary(args):
-    if not getattr(args, "use_wandb", False):
+    if not args.use_wandb:
         return None
 
     if args.wandb_key is not None:
