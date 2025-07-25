@@ -1,15 +1,10 @@
-import copy
 import logging
-import os
 from pathlib import Path
 from typing import Union
 
 import ray
 import torch
-from transformers import AutoTokenizer
 
-import wandb
-from slime.utils.data import Dataset
 from slime.utils.misc import load_function
 from slime.utils.types import Sample
 from slime.ray.rollout_data_source import RolloutDataSource

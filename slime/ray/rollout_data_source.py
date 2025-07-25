@@ -6,6 +6,7 @@ import torch
 from slime.utils.data import Dataset
 from transformers import AutoTokenizer
 
+
 # TODO may further refactor data-loading part later
 class RolloutDataSource:
     def __init__(self, args):
@@ -39,7 +40,6 @@ class RolloutDataSource:
                 self.dataset.shuffle(self.epoch_id)
         else:
             self.dataset = None
-
 
     def get_samples(self, num_samples):
         samples = []

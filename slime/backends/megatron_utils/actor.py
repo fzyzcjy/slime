@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import ray
 import torch
 import torch.distributed as dist
 
@@ -18,11 +17,10 @@ from slime.ray.ppo_actor import TrainRayActor
 from slime.utils.memory_utils import clear_memory, print_memory
 from slime.utils.timer import Timer, timer
 
-from slime.utils.wandb_utils import init_wandb_secondary
 from ..utils.data import process_rollout_data
 from .checkpoint import load_checkpoint
 from .data import get_data_iterator, log_eval_data, log_perf_data, log_rollout_data
-from .initialize import get_gloo_group, init, is_megatron_main_rank
+from .initialize import get_gloo_group, init
 from .loss import compute_advantages_and_returns
 from .model import forward_only, initialize_model_and_optimizer, save, train
 from .update_weight_utils import (

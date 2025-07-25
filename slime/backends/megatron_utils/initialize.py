@@ -6,7 +6,6 @@ import torch.distributed as dist
 from megatron.core import mpu, tensor_parallel
 from megatron.core.num_microbatches_calculator import init_num_microbatches_calculator
 from megatron.training.global_vars import _build_tokenizer, set_args
-from slime.utils.wandb_utils import init_wandb_secondary
 
 GLOO_GROUP = None
 
@@ -103,6 +102,7 @@ def init(args):
 
         custom_init = load_function(args.custom_megatron_init_path)
         custom_init(args)
+
 
 # TODO shall we use a simpler method to determine which rank to init wandb?
 def is_megatron_main_rank():
