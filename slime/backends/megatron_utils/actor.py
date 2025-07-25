@@ -4,6 +4,7 @@ import ray
 import torch
 import torch.distributed as dist
 
+
 if torch.version.hip:
     from vllm.device_allocator.cumem import CuMemAllocator
 else:
@@ -17,10 +18,11 @@ from slime.ray.ppo_actor import TrainRayActor
 from slime.utils.memory_utils import clear_memory, print_memory
 from slime.utils.timer import Timer, timer
 
+from slime.utils.wandb_utils import init_wandb_secondary
 from ..utils.data import process_rollout_data
 from .checkpoint import load_checkpoint
 from .data import get_data_iterator, log_eval_data, log_perf_data, log_rollout_data
-from .initialize import get_gloo_group, init
+from .initialize import get_gloo_group, init, is_megatron_main_rank
 from .loss import compute_advantages_and_returns
 from .model import forward_only, initialize_model_and_optimizer, save, train
 from .update_weight_utils import (
@@ -34,8 +36,10 @@ class MegatronTrainRayActor(TrainRayActor):
     def init(self, args, role, with_ref=False):
         super().init(args, role, with_ref)
 
-        wandb_run_id = init(args)
-        self.args.wandb_run_id = wandb_run_id
+        if args.use_wandb and is_megatron_main_rank():
+            init_wandb_secondary(wandb_run_id)
+
+        init(args)
 
         # read config and tokenizer serialized to prevent concurrent writing bug.
         for i in range(dist.get_world_size()):

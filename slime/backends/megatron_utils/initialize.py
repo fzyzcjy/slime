@@ -104,11 +104,7 @@ def init(args):
         custom_init = load_function(args.custom_megatron_init_path)
         custom_init(args)
 
-    # TODO maybe_move
-    if args.use_wandb and is_main_rank():
-        init_wandb_secondary(wandb_run_id)
-
-def is_main_rank():
+def is_megatron_main_rank():
     return (
         mpu.get_data_parallel_rank(with_context_parallel=True) == 0
         and mpu.get_tensor_model_parallel_rank() == 0
