@@ -7,8 +7,6 @@ from megatron.core import mpu, tensor_parallel
 from megatron.core.num_microbatches_calculator import init_num_microbatches_calculator
 from megatron.training.global_vars import _build_tokenizer, set_args
 
-import wandb
-
 GLOO_GROUP = None
 
 
@@ -110,33 +108,4 @@ def init(args):
         and mpu.get_tensor_model_parallel_rank() == 0
         and mpu.get_pipeline_model_parallel_rank() == mpu.get_pipeline_model_parallel_world_size() - 1
     ):
-        if args.wandb_key is not None:
-            wandb.login(key=args.wandb_key, host=args.wandb_host)
-        # add random 6 length string with characters
-        if args.wandb_random_suffix:
-            group = args.wandb_group + "_" + wandb.util.generate_id()
-            run_name = f"{group}-RANK_{args.rank}"
-        else:
-            group = args.wandb_group
-            run_name = args.wandb_group
-
-        wandb.init(
-            entity=args.wandb_team,
-            project=args.wandb_project,
-            group=group,
-            name=run_name,
-            config=args.__dict__,
-            settings=wandb.Settings(mode="shared", x_primary=True),
-        )
-
-        wandb.define_metric("train/step")
-        wandb.define_metric("train/*", step_metric="train/step")
-        wandb.define_metric("rollout/step")
-        wandb.define_metric("rollout/*", step_metric="rollout/step")
-        wandb.define_metric("multi_turn/*", step_metric="rollout/step")
-        wandb.define_metric("passrate/*", step_metric="rollout/step")
-        wandb.define_metric("eval/step")
-        wandb.define_metric("eval/*", step_metric="eval/step")
-        wandb.define_metric("perf/step")
-        wandb.define_metric("perf/*", step_metric="rollout/step")
-        return wandb.run.id
+        TODO
