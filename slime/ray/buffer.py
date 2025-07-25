@@ -9,6 +9,7 @@ from slime.utils.misc import load_function
 from slime.utils.types import Sample
 from slime.ray.rollout_data_source import RolloutDataSource
 from slime.utils.wandb_utils import init_wandb_secondary
+from slime.utils.ray_utils import Box
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
@@ -114,7 +115,7 @@ class Buffer:
                 )
             data = self._convert_samples_to_train_data(data)
 
-        return ray.put(data)
+        return Box(ray.put(data))
 
     def get_data(self, rollout_id, evaluation=False):
         data_pool = self.train_data_pool if not evaluation else self.eval_data_pool
