@@ -41,6 +41,9 @@ def init_wandb_primary(args):
 
 
 def init_wandb_secondary(wandb_run_id):
+    if wandb_run_id is None:
+        return
+
     TODO_is_it_correct
 
     # Use the same wandb configuration as main training process
