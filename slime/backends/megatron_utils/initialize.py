@@ -104,6 +104,7 @@ def init(args):
         custom_init = load_function(args.custom_megatron_init_path)
         custom_init(args)
 
+# TODO shall we use a simpler method to determine which rank to init wandb?
 def is_megatron_main_rank():
     return (
         mpu.get_data_parallel_rank(with_context_parallel=True) == 0
