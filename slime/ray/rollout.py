@@ -150,8 +150,7 @@ def create_rollout_engines(args, pg):
     return rollout_engines
 
 
-# TODO rename, since it is not "a group of ray actors" but contains many things
-class RolloutGroup:
+class RolloutManager:
     def __init__(self, args, pg):
         self.args = args
         self.start_router()
