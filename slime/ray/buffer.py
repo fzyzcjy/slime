@@ -47,7 +47,7 @@ class Buffer:
 
     def get_num_rollout_per_epoch(self):
         assert self.args.rollout_global_dataset
-        return len(self.dataset) // self.args.rollout_batch_size
+        return len(self.data_source.dataset) // self.args.rollout_batch_size
 
     def update_wandb_run_id(self, run_id):
         """Update wandb run_id and initialize wandb"""
@@ -91,6 +91,7 @@ class Buffer:
 
         wandb.init(**wandb_config, settings=wandb.Settings(mode="shared"))
 
+    # TODO simplify remaining logic
     def get_samples(self, num_samples: int) -> list[list[Sample]]:
         """
         Return num_samples samples
@@ -102,36 +103,7 @@ class Buffer:
         if num_samples == 0:
             return samples
 
-        if self.dataset is not None:
-            if self.sample_offset + num_samples <= len(self.dataset):
-                prompt_samples = self.dataset.samples[self.sample_offset : self.sample_offset + num_samples]
-                self.sample_offset += num_samples
-            else:
-                prompt_samples = self.dataset.samples[self.sample_offset :]
-                num_samples -= len(prompt_samples)
-                self.epoch_id += 1
-                if self.args.rollout_shuffle:
-                    self.dataset.shuffle(self.epoch_id)
-                prompt_samples += self.dataset.samples[:num_samples]
-                self.sample_offset = num_samples
-            for prompt_sample in prompt_samples:
-                group = []
-                for _ in range(self.args.n_samples_per_prompt):
-                    sample = copy.deepcopy(prompt_sample)
-                    sample.index = self.sample_index
-                    self.sample_index += 1
-                    group.append(sample)
-                samples.append(group)
-        else:
-            for _ in range(num_samples):
-                group = []
-                for _ in range(self.args.n_samples_per_prompt):
-                    sample = Sample(
-                        index=self.sample_index,
-                    )
-                    self.sample_index += 1
-                    group.append(sample)
-                samples.append(group)
+        samples += self.data_source.get_samples(num_samples=num_samples)
         return samples
 
     def _get_samples_from_buffer(self, num_samples: int) -> list[list[Sample]]:
