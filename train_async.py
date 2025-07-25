@@ -45,9 +45,6 @@ def train(args):
         # Sync the last generation
         ray.get(generation_handles)
 
-        # This is a synchronous call to ensure that the rollout data is ready
-        actor_model.get_rollout_data(rollout_id)
-
         # Start the next rollout early.
         if rollout_id + 1 < args.num_rollout:
             generation_handles = rollout_generator.async_generate(rollout_id + 1)
