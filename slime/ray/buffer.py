@@ -57,11 +57,6 @@ class Buffer:
 
     def _init_wandb(self):
         """Initialize wandb for buffer process if use_wandb is enabled"""
-        # Check if wandb is already initialized in this process
-        if wandb.run is not None:
-            print("Wandb already initialized in buffer process")
-            return
-
         # Use the same wandb configuration as main training process
         wandb_config = {
             "entity": getattr(self.args, "wandb_team", None),
