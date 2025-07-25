@@ -180,7 +180,7 @@ class MegatronTrainRayActor(TrainRayActor):
                 rollout_data=rollout_data,
             )
 
-    def train(self, rollout_id):
+    def train(self, rollout_id, rollout_data_ref):
         Timer().end("train_wait")
 
         rollout_data = {}
@@ -268,7 +268,7 @@ class MegatronTrainRayActor(TrainRayActor):
         log_perf_data(rollout_id, self.args)
         Timer().start("train_wait")
 
-    def eval(self, rollout_id):
+    def eval(self, rollout_id, rollout_data_ref):
         if self.args.debug_train_only:
             return
 
