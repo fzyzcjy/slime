@@ -37,11 +37,6 @@ class Buffer:
         else:
             self.buffer_filter = load_function(self.args.buffer_filter_path)
 
-        self.epoch_id = 0
-        self.sample_index = 0
-        self.sample_offset = 0
-        self.metadata = {}
-
         if args.rollout_global_dataset:
             tokenizer = AutoTokenizer.from_pretrained(args.hf_checkpoint, trust_remote_code=True)
 
