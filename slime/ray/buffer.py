@@ -196,7 +196,24 @@ class Buffer:
             if not evaluation and isinstance(data[0], list):
                 data = sum(data, [])
 
-        self._set_data(data, evaluation=evaluation)
+        # TODO to be refactored (originally Buffer._set_data)
+        data_pool = self.eval_data_pool if evaluation else self.train_data_pool
+        if not evaluation:
+            # TODO extract to a function during refactor
+            if (path_template := self.args.save_debug_rollout_data) is not None:
+                path = Path(path_template.format(rollout_id=self.rollout_id))
+                print(f"Save debug rollout data to {path}")
+                path.parent.mkdir(parents=True, exist_ok=True)
+                torch.save(
+                    dict(
+                        rollout_id=self.rollout_id,
+                        samples=[sample.to_dict() for sample in data],
+                    ),
+                    path,
+                )
+            data = self._convert_samples_to_train_data(data)
+        data_pool[self.rollout_id] = data
+
 
     def get_data(self, rollout_id, evaluation=False):
         data_pool = self.train_data_pool if not evaluation else self.eval_data_pool
@@ -240,24 +257,6 @@ class Buffer:
         if samples[0].metadata and "round_number" in samples[0].metadata:
             train_data["round_number"] = [sample.metadata["round_number"] for sample in samples]
         return train_data
-
-    def _set_data(self, data: Union[list[Sample], Any], evaluation=False):
-        data_pool = self.eval_data_pool if evaluation else self.train_data_pool
-        if not evaluation:
-            # TODO extract to a function during refactor
-            if (path_template := self.args.save_debug_rollout_data) is not None:
-                path = Path(path_template.format(rollout_id=self.rollout_id))
-                print(f"Save debug rollout data to {path}")
-                path.parent.mkdir(parents=True, exist_ok=True)
-                torch.save(
-                    dict(
-                        rollout_id=self.rollout_id,
-                        samples=[sample.to_dict() for sample in data],
-                    ),
-                    path,
-                )
-            data = self._convert_samples_to_train_data(data)
-        data_pool[self.rollout_id] = data
 
     def update_metadata(self, metadata: dict):
         self.metadata.update(metadata)
