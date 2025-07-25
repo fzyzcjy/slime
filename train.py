@@ -10,7 +10,7 @@ def train(args):
 
     actor_model = create_actor_group(args, pgs["actor"])
 
-    # create the rollout generator, with sglang engines inside.
+    # create the rollout manager, with sglang engines inside.
     rollout_manager = create_rollout_manager(args, pgs["rollout"])
 
     # calculate num_rollout from num_epoch
