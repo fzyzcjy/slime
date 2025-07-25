@@ -358,7 +358,7 @@ def log_eval_data(rollout_id, args, rollout_data_ref):
         and mpu.get_data_parallel_rank(with_context_parallel=True) == 0
     ):
         rank = dist.get_rank()
-        data = ray.get(rollout_data_ref)
+        data = ray.get(rollout_data_ref.inner)
 
         log_dict = {}
         for key in data.keys():

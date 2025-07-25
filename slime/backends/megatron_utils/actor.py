@@ -16,11 +16,12 @@ from transformers import AutoConfig, AutoTokenizer
 from slime.ray.ppo_actor import TrainRayActor
 from slime.utils.memory_utils import clear_memory, print_memory
 from slime.utils.timer import Timer, timer
+from slime.utils.wandb_utils import init_wandb_secondary
 
 from ..utils.data import process_rollout_data
 from .checkpoint import load_checkpoint
 from .data import get_data_iterator, log_eval_data, log_perf_data, log_rollout_data
-from .initialize import get_gloo_group, init
+from .initialize import get_gloo_group, init, is_megatron_main_rank
 from .loss import compute_advantages_and_returns
 from .model import forward_only, initialize_model_and_optimizer, save, train
 from .update_weight_utils import (
@@ -31,10 +32,13 @@ from .update_weight_utils import (
 
 
 class MegatronTrainRayActor(TrainRayActor):
-    def init(self, args, role, with_ref=False):
+    def init(self, args, role, wandb_run_id, with_ref=False):
         super().init(args, role, with_ref)
 
         init(args)
+
+        if is_megatron_main_rank():
+            init_wandb_secondary(args, wandb_run_id)
 
         # read config and tokenizer serialized to prevent concurrent writing bug.
         for i in range(dist.get_world_size()):
@@ -193,7 +197,7 @@ class MegatronTrainRayActor(TrainRayActor):
 
         with timer("train"):
             with timer("data_preprocess"):
-                self._get_rollout_data(rollout_data)
+                self._get_rollout_data(rollout_data_ref, rollout_data)
 
                 # Create data iterator for log_probs and train.
                 (
