@@ -7,21 +7,16 @@ import torch
 import torch.distributed as dist
 
 from slime.ray.ray_actor import RayActor
-from slime.utils.wandb_utils import init_wandb_secondary
-from slime.backends.megatron_utils.initialize import is_megatron_main_rank
 
 
 class TrainRayActor(RayActor):
-    def __init__(self, world_size, rank, master_addr, master_port, wandb_run_id):
+    def __init__(self, world_size, rank, master_addr, master_port):
         self._world_size = world_size
         self._rank = rank
         if master_addr:
             self.master_addr, self.master_port = master_addr, master_port
         else:
             self.master_addr, self.master_port = self._get_current_node_ip_and_free_port(start_port=20000)
-
-        if is_megatron_main_rank():
-            init_wandb_secondary(wandb_run_id)
 
         os.environ["MASTER_ADDR"] = self.master_addr
         os.environ["MASTER_PORT"] = str(self.master_port)
@@ -32,7 +27,7 @@ class TrainRayActor(RayActor):
         # os.environ["LOCAL_RANK"] = str(ray.get_gpu_ids()[0])
         os.environ["LOCAL_RANK"] = str(ray.get_gpu_ids()[0])
 
-    def init(self, args, role, with_ref=False):
+    def init(self, args, role, wandb_run_id, with_ref=False):
         self.args = args
         self.role = role
         self.with_ref = with_ref

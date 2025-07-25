@@ -34,15 +34,16 @@ class RayTrainGroup:
     ) -> None:
         self._num_nodes = num_nodes
         self._num_gpus_per_node = num_gpus_per_node
+        self._wandb_run_id = wandb_run_id
 
         # custom resources, see https://docs.ray.io/en/latest/ray-core/scheduling/resources.html
         self._resources = resources
         self._num_resources_per_node = num_resources_per_node
 
         # Allocate the GPUs for actors w/o instantiating them
-        self._allocate_gpus_for_actor(pg, num_gpus_per_actor, wandb_run_id=wandb_run_id)
+        self._allocate_gpus_for_actor(pg, num_gpus_per_actor)
 
-    def _allocate_gpus_for_actor(self, pg, num_gpus_per_actor, wandb_run_id: Optional[str]):
+    def _allocate_gpus_for_actor(self, pg, num_gpus_per_actor):
         world_size = self._num_nodes * self._num_gpus_per_node
 
         # Use placement group to lock resources for models of same type
@@ -74,7 +75,7 @@ class RayTrainGroup:
                     placement_group=pg,
                     placement_group_bundle_index=reordered_bundle_indices[rank],
                 ),
-            ).remote(world_size, rank, master_addr, master_port, wandb_run_id)
+            ).remote(world_size, rank, master_addr, master_port)
             if rank == 0:
                 master_addr, master_port = ray.get(actor.get_master_addr_and_port.remote())
             self._actor_handlers.append(actor)
@@ -84,7 +85,7 @@ class RayTrainGroup:
         Allocate GPU resourced and initialize model, optimzier, local ckpt, etc.
         """
         self.args = args
-        return [actor.init.remote(args, role, with_ref=with_ref) for actor in self._actor_handlers]
+        return [actor.init.remote(args, role, self._wandb_run_id, with_ref=with_ref) for actor in self._actor_handlers]
 
     def async_init_weight_update_connections(self, rollout):
         """
