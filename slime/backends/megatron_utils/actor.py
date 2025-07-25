@@ -144,7 +144,7 @@ class MegatronTrainRayActor(TrainRayActor):
             print(f"Updating buffer's wandb run_id to: {self.args.wandb_run_id}")
             ray.get(self.data_buffer.update_wandb_run_id.remote(self.args.wandb_run_id))
 
-    def get_rollout_data(self, rollout_id, rollout_data_ref, rollout_data):
+    def _get_rollout_data(self, rollout_data_ref, rollout_data):
         # Fetch data through ray on CPU, not sure if this will be performance bottleneck.
         # Both first pp stage and the last pp stage will recieve the data.
         process_rollout_data(
@@ -186,7 +186,7 @@ class MegatronTrainRayActor(TrainRayActor):
 
         if self.args.debug_rollout_only:
             # For debug rollout, we just log the data and return.
-            self.get_rollout_data(rollout_id, rollout_data_ref, rollout_data)
+            self._get_rollout_data(rollout_data_ref, rollout_data)
             log_rollout_data(rollout_id, self.args, rollout_data)
             log_perf_data(rollout_id, self.args)
             Timer().start("train_wait")
@@ -197,7 +197,7 @@ class MegatronTrainRayActor(TrainRayActor):
 
         with timer("train"):
             with timer("data_preprocess"):
-                self.get_rollout_data(rollout_id, rollout_data)
+                self._get_rollout_data(rollout_data)
 
                 # Create data iterator for log_probs and train.
                 (
