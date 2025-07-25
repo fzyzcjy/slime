@@ -7,6 +7,7 @@ def init_wandb_primary(args):
 
     if args.wandb_key is not None:
         wandb.login(key=args.wandb_key, host=args.wandb_host)
+
     # add random 6 length string with characters
     if args.wandb_random_suffix:
         group = args.wandb_group + "_" + wandb.util.generate_id()
