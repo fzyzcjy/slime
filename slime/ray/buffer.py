@@ -12,6 +12,7 @@ import wandb
 from slime.utils.data import Dataset
 from slime.utils.misc import load_function
 from slime.utils.types import Sample
+from slime.ray.rollout_data_source import RolloutDataSource
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
@@ -28,6 +29,8 @@ def pop_first(args, rollout_id, buffer: list[list[Sample]], num_samples: int) ->
 class Buffer:
     def __init__(self, args):
         self.args = args
+
+        self.data_source = RolloutDataSource(args)
 
         # a list of sample group.
         # each group has n_samples_per_prompt samples, all of them has the same prompt.
