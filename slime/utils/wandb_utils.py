@@ -2,6 +2,9 @@ import wandb
 
 
 def init_wandb_primary(args):
+    if not getattr(args, "use_wandb", False):
+        return None
+
     if args.wandb_key is not None:
         wandb.login(key=args.wandb_key, host=args.wandb_host)
     # add random 6 length string with characters

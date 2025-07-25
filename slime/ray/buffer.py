@@ -57,9 +57,6 @@ class Buffer:
 
     def _init_wandb(self):
         """Initialize wandb for buffer process if use_wandb is enabled"""
-        if not hasattr(self.args, "use_wandb") or not self.args.use_wandb:
-            return
-
         # Check if wandb is already initialized in this process
         if wandb.run is not None:
             print("Wandb already initialized in buffer process")
