@@ -197,7 +197,6 @@ class Buffer:
                 data = sum(data, [])
 
         # TODO to be refactored (originally Buffer._set_data)
-        data_pool = self.eval_data_pool if evaluation else self.train_data_pool
         if not evaluation:
             # TODO extract to a function during refactor
             if (path_template := self.args.save_debug_rollout_data) is not None:
@@ -212,7 +211,8 @@ class Buffer:
                     path,
                 )
             data = self._convert_samples_to_train_data(data)
-        data_pool[self.rollout_id] = data
+
+        return ray.put(data)
 
 
     def get_data(self, rollout_id, evaluation=False):
