@@ -33,7 +33,7 @@ from .update_weight_utils import (
 
 
 class MegatronTrainRayActor(TrainRayActor):
-    def init(self, args, role, with_ref=False):
+    def init(self, args, role, wandb_run_id, with_ref=False):
         super().init(args, role, with_ref)
 
         if args.use_wandb and is_megatron_main_rank():
