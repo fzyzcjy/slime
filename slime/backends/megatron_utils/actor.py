@@ -197,7 +197,7 @@ class MegatronTrainRayActor(TrainRayActor):
 
         with timer("train"):
             with timer("data_preprocess"):
-                self._get_rollout_data(rollout_data)
+                self._get_rollout_data(rollout_data_ref, rollout_data)
 
                 # Create data iterator for log_probs and train.
                 (

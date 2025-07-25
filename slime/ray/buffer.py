@@ -5,9 +5,11 @@ from typing import Union
 import ray
 import torch
 
+import wandb
 from slime.utils.misc import load_function
 from slime.utils.types import Sample
 from slime.ray.rollout_data_source import RolloutDataSource
+from slime.utils.ray_utils import Box
 from slime.utils.wandb_utils import init_wandb_secondary
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -26,6 +28,8 @@ class Buffer:
     def __init__(self, args, wandb_run_id):
         self.args = args
         init_wandb_secondary(args, wandb_run_id)
+
+        self.data_source = RolloutDataSource(args)
 
         self.data_source = RolloutDataSource(args)
 
@@ -114,7 +118,7 @@ class Buffer:
                 )
             data = self._convert_samples_to_train_data(data)
 
-        return ray.put(data)
+        return Box(ray.put(data))
 
     def get_data(self, rollout_id, evaluation=False):
         data_pool = self.train_data_pool if not evaluation else self.eval_data_pool
