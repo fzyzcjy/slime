@@ -57,31 +57,6 @@ class Buffer:
 
     def _init_wandb(self):
         """Initialize wandb for buffer process if use_wandb is enabled"""
-        # Use the same wandb configuration as main training process
-        wandb_config = {
-            "entity": getattr(self.args, "wandb_team", None),
-            "project": getattr(self.args, "wandb_project", "slime"),
-            "group": getattr(self.args, "wandb_group", None),
-            "config": self.args.__dict__,
-            "reinit": True,  # Allow reinit in same process
-        }
-
-        # If wandb_run_id is available, join the existing run
-        if hasattr(self.args, "wandb_run_id") and self.args.wandb_run_id:
-            wandb_config["id"] = self.args.wandb_run_id
-            wandb_config["resume"] = "allow"
-            print("=" * 100)
-            print(f"Buffer process joining existing wandb run: {self.args.wandb_run_id}")
-            print("=" * 100)
-        else:
-            # Fallback: create a separate run for buffer process
-            wandb_config["name"] = f"buffer-{os.getpid()}"
-            print("Buffer process creating separate wandb run")
-
-        # Remove None values
-        wandb_config = {k: v for k, v in wandb_config.items() if v is not None}
-
-        wandb.init(**wandb_config, settings=wandb.Settings(mode="shared"))
 
     # TODO simplify remaining logic
     def get_samples(self, num_samples: int) -> list[list[Sample]]:
