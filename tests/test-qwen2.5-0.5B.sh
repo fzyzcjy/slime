@@ -13,7 +13,7 @@ pkill -9 python
 set -ex
 
 
-huggingface-cli download --repo-type zhuzilin/gsm8k --local-dir gsm8k
+huggingface-cli download --repo-type dataset zhuzilin/gsm8k --local-dir gsm8k
 
 
 # will prevent ray from buffering stdout/stderr
