@@ -52,17 +52,11 @@ def init_wandb_secondary(wandb_run_id):
         "reinit": True,  # Allow reinit in same process
     }
 
-    # If wandb_run_id is available, join the existing run
-    if hasattr(args, "wandb_run_id") and args.wandb_run_id:
-        wandb_config["id"] = args.wandb_run_id
-        wandb_config["resume"] = "allow"
-        print("=" * 100)
-        print(f"Buffer process joining existing wandb run: {args.wandb_run_id}")
-        print("=" * 100)
-    else:
-        # Fallback: create a separate run for buffer process
-        wandb_config["name"] = f"buffer-{os.getpid()}"
-        print("Buffer process creating separate wandb run")
+    wandb_config["id"] = wandb_run_id
+    wandb_config["resume"] = "allow"
+    print("=" * 100)
+    print(f"Buffer process joining existing wandb run: {args.wandb_run_id}")
+    print("=" * 100)
 
     # Remove None values
     wandb_config = {k: v for k, v in wandb_config.items() if v is not None}
