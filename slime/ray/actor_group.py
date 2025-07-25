@@ -106,9 +106,7 @@ class RayTrainGroup:
 
     def async_train(self, rollout_id):
         """Do one rollout training"""
-        return [
-            actor.train.remote(rollout_id) for actor in self._actor_handlers
-        ]
+        return [actor.train.remote(rollout_id) for actor in self._actor_handlers]
 
     def async_eval(self, rollout_id):
         """Evaluate the model"""
