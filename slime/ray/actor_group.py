@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 import ray
 
@@ -27,6 +27,7 @@ class RayTrainGroup:
         num_nodes,
         num_gpus_per_node,
         pg: tuple[PlacementGroup, list[int]],
+        wandb_run_id: Optional[str] = None,
         num_gpus_per_actor=1,
         resources: Dict[str, float] = None,
         num_resources_per_node: int = None,

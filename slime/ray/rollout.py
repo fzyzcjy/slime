@@ -182,7 +182,7 @@ def _start_router(args):
 
 
 class RolloutManager:
-    def __init__(self, args, pg):
+    def __init__(self, args, pg, wandb_run_id):
         self.args = args
         _start_router(args)
         self.data_buffer = Buffer.options(
