@@ -42,29 +42,8 @@ def init_wandb_secondary(wandb_run_id):
     if wandb_run_id is None:
         return
 
-    TODO_is_it_correct
-
-    # Use the same wandb configuration as main training process
-    wandb_config = {
-        "entity": getattr(args, "wandb_team", None),
-        "project": getattr(args, "wandb_project", "slime"),
-        "group": getattr(args, "wandb_group", None),
-        "config": args.__dict__,
-        "reinit": True,  # Allow reinit in same process
-    }
-
-    wandb_config["id"] = wandb_run_id
-    wandb_config["resume"] = "allow"
-    print("=" * 100)
-    print(f"Buffer process joining existing wandb run: {args.wandb_run_id}")
-    print("=" * 100)
-
-    # Remove None values
-    wandb_config = {k: v for k, v in wandb_config.items() if v is not None}
-
     wandb.init(
         id=wandb_run_id,
-        **wandb_config,
         settings=wandb.Settings(
             mode="shared",
             x_primary=False,
