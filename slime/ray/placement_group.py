@@ -114,5 +114,6 @@ def create_actor_group(args, pg):
     return actor_model
 
 
+# TODO rename (when RolloutGroup is renamed)
 def create_rollout_group(args, pg):
     return RolloutGroup(args, pg)
