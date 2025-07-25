@@ -52,7 +52,7 @@ def train(args):
         if rollout_id + 1 < args.num_rollout:
             generation_handles = rollout_generator.async_generate(rollout_id + 1)
 
-        ray.get(actor_model.async_train(rollout_id, with_data_fetching=False))
+        ray.get(actor_model.async_train(rollout_id))
 
         if args.save_interval is not None and (
             (rollout_id + 1) % args.save_interval == 0
