@@ -144,13 +144,12 @@ class MegatronTrainRayActor(TrainRayActor):
             print(f"Updating buffer's wandb run_id to: {self.args.wandb_run_id}")
             ray.get(self.data_buffer.update_wandb_run_id.remote(self.args.wandb_run_id))
 
-    def get_rollout_data(self, rollout_id, rollout_data):
+    def get_rollout_data(self, rollout_id, rollout_data_ref, rollout_data):
         # Fetch data through ray on CPU, not sure if this will be performance bottleneck.
         # Both first pp stage and the last pp stage will recieve the data.
         process_rollout_data(
-            rollout_id,
             self.args,
-            self.data_buffer,
+            rollout_data_ref,
             mpu.get_data_parallel_rank(with_context_parallel=False),
             mpu.get_data_parallel_world_size(with_context_parallel=False),
             rollout_data=rollout_data,
@@ -187,7 +186,7 @@ class MegatronTrainRayActor(TrainRayActor):
 
         if self.args.debug_rollout_only:
             # For debug rollout, we just log the data and return.
-            self.get_rollout_data(rollout_id, rollout_data)
+            self.get_rollout_data(rollout_id, rollout_data_ref, rollout_data)
             log_rollout_data(rollout_id, self.args, rollout_data)
             log_perf_data(rollout_id, self.args)
             Timer().start("train_wait")
