@@ -48,12 +48,12 @@ def train(args):
             eval_rollout_data_ref = ray.get(rollout_generator.async_generate(rollout_id, evaluation=True))
             ray.get(actor_model.async_eval(rollout_id, eval_rollout_data_ref))
 
-        ray.get(rollout_generator.async_generate(rollout_id))
+        rollout_data_ref = ray.get(rollout_generator.async_generate(rollout_id))
 
         if args.offload:
             ray.get(rollout_generator.async_offload())
 
-        ray.get(actor_model.async_train(rollout_id))
+        ray.get(actor_model.async_train(rollout_id, rollout_data_ref))
 
         if args.save_interval is not None and (
             (rollout_id + 1) % args.save_interval == 0
