@@ -188,7 +188,7 @@ class RolloutManager:
         self.data_buffer = Buffer.options(
             num_cpus=1,
             num_gpus=0,
-        ).remote(args)
+        ).remote(args, wandb_run_id=wandb_run_id)
 
         self.all_rollout_engines = create_rollout_engines(args, pg)
         nodes_per_engine = max(1, args.rollout_num_gpus_per_engine // 8)

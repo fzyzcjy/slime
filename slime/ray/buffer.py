@@ -13,6 +13,7 @@ from slime.utils.data import Dataset
 from slime.utils.misc import load_function
 from slime.utils.types import Sample
 from slime.ray.rollout_data_source import RolloutDataSource
+from slime.utils.wandb_utils import init_wandb_secondary
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
@@ -27,8 +28,9 @@ def pop_first(args, rollout_id, buffer: list[list[Sample]], num_samples: int) ->
 
 @ray.remote
 class Buffer:
-    def __init__(self, args):
+    def __init__(self, args, wandb_run_id):
         self.args = args
+        init_wandb_secondary(wandb_run_id)
 
         self.data_source = RolloutDataSource(args)
 
