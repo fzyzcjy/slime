@@ -43,9 +43,10 @@ def train(args):
     # train loop.
     # note that for async training, one can change the position of the sync operation(ray.get).
     for rollout_id in range(args.start_rollout_id, args.num_rollout):
+        # TODO extract the duplicated eval logic
         if args.eval_interval is not None and rollout_id == 0:
-            ray.get(rollout_generator.async_generate(rollout_id, evaluation=True))
-            ray.get(actor_model.async_eval(rollout_id))
+            eval_rollout_data_ref = ray.get(rollout_generator.async_generate(rollout_id, evaluation=True))
+            ray.get(actor_model.async_eval(rollout_id, eval_rollout_data_ref))
 
         ray.get(rollout_generator.async_generate(rollout_id))
 
