@@ -6,6 +6,7 @@ import torch.distributed as dist
 from megatron.core import mpu, tensor_parallel
 from megatron.core.num_microbatches_calculator import init_num_microbatches_calculator
 from megatron.training.global_vars import _build_tokenizer, set_args
+from slime.utils.wandb_utils import init_wandb_secondary
 
 GLOO_GROUP = None
 
@@ -68,7 +69,7 @@ def _initialize_distributed(args, get_embedding_ranks=None, get_position_embeddi
     )
 
 
-def init(args):
+def init(args, wandb_run_id):
     set_args(args)
     # Pytorch distributed.
     _initialize_distributed(args)
@@ -103,9 +104,10 @@ def init(args):
         custom_init = load_function(args.custom_megatron_init_path)
         custom_init(args)
 
+    # TODO maybe_move
     if args.use_wandb and (
         mpu.get_data_parallel_rank(with_context_parallel=True) == 0
         and mpu.get_tensor_model_parallel_rank() == 0
         and mpu.get_pipeline_model_parallel_rank() == mpu.get_pipeline_model_parallel_world_size() - 1
     ):
-        TODO
+        init_wandb_secondary(wandb_run_id)
