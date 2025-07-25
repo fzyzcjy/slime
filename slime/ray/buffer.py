@@ -204,11 +204,13 @@ class Buffer:
             train_data["round_number"] = [sample.metadata["round_number"] for sample in samples]
         return train_data
 
+    # TODO remove
     def update_metadata(self, metadata: dict):
-        self.metadata.update(metadata)
+        self.data_source.metadata.update(metadata)
 
+    # TODO remove
     def get_metadata(self):
-        return self.metadata
+        return self.data_source.metadata
 
     def get_buffer_length(self):
         return len(self.buffer)
