@@ -62,4 +62,12 @@ def init_wandb_secondary(wandb_run_id):
     # Remove None values
     wandb_config = {k: v for k, v in wandb_config.items() if v is not None}
 
-    wandb.init(**wandb_config, settings=wandb.Settings(mode="shared"))
+    wandb.init(
+        id=wandb_run_id,
+        **wandb_config,
+        settings=wandb.Settings(
+            mode="shared",
+            x_primary=False,
+            x_update_finish_state=False,
+        ),
+    )
