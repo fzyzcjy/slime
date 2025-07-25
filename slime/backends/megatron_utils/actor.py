@@ -140,9 +140,6 @@ class MegatronTrainRayActor(TrainRayActor):
 
     def set_data_buffer(self, data_buffer):
         self.data_buffer = data_buffer
-        if getattr(self.args, "use_wandb", False) and getattr(self.args, "wandb_run_id", None):
-            print(f"Updating buffer's wandb run_id to: {self.args.wandb_run_id}")
-            ray.get(self.data_buffer.update_wandb_run_id.remote(self.args.wandb_run_id))
 
     def _get_rollout_data(self, rollout_data_ref, rollout_data):
         # Fetch data through ray on CPU, not sure if this will be performance bottleneck.

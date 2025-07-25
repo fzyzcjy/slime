@@ -49,16 +49,6 @@ class Buffer:
         assert self.args.rollout_global_dataset
         return len(self.data_source.dataset) // self.args.rollout_batch_size
 
-    def update_wandb_run_id(self, run_id):
-        """Update wandb run_id and initialize wandb"""
-        self.args.wandb_run_id = run_id
-        self._init_wandb()  # Now initialize wandb with the correct run_id
-        return True
-
-    def _init_wandb(self):
-        """Initialize wandb for buffer process if use_wandb is enabled"""
-        TODO
-
     # TODO simplify remaining logic
     def get_samples(self, num_samples: int) -> list[list[Sample]]:
         """
