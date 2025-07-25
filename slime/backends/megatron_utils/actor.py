@@ -38,7 +38,7 @@ class MegatronTrainRayActor(TrainRayActor):
         init(args)
 
         if is_megatron_main_rank():
-            init_wandb_secondary(wandb_run_id)
+            init_wandb_secondary(args, wandb_run_id)
 
         # read config and tokenizer serialized to prevent concurrent writing bug.
         for i in range(dist.get_world_size()):

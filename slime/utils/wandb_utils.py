@@ -25,6 +25,30 @@ def init_wandb_primary(args):
         settings=wandb.Settings(mode="shared", x_primary=True),
     )
 
+    _init_wandb_common()
+
+    return wandb.run.id
+
+
+# https://docs.wandb.ai/guides/track/log/distributed-training/#track-all-processes-to-a-single-run
+def init_wandb_secondary(args, wandb_run_id):
+    if wandb_run_id is None:
+        return
+
+    wandb.init(
+        id=wandb_run_id,
+        entity=args.wandb_team,
+        project=args.wandb_project,
+        settings=wandb.Settings(
+            mode="shared",
+            x_primary=False,
+            x_update_finish_state=False,
+        ),
+    )
+
+    _init_wandb_common()
+
+def _init_wandb_common():
     wandb.define_metric("train/step")
     wandb.define_metric("train/*", step_metric="train/step")
     wandb.define_metric("rollout/step")
@@ -36,18 +60,3 @@ def init_wandb_primary(args):
     wandb.define_metric("perf/step")
     wandb.define_metric("perf/*", step_metric="rollout/step")
 
-    return wandb.run.id
-
-
-def init_wandb_secondary(wandb_run_id):
-    if wandb_run_id is None:
-        return
-
-    wandb.init(
-        id=wandb_run_id,
-        settings=wandb.Settings(
-            mode="shared",
-            x_primary=False,
-            x_update_finish_state=False,
-        ),
-    )
