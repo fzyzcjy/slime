@@ -37,29 +37,6 @@ class Buffer:
         else:
             self.buffer_filter = load_function(self.args.buffer_filter_path)
 
-        if args.rollout_global_dataset:
-            tokenizer = AutoTokenizer.from_pretrained(args.hf_checkpoint, trust_remote_code=True)
-
-            # TODO move (during the refactor)
-            if (d := args.dump_details) is not None:
-                tokenizer.save_pretrained(Path(d) / "tokenizer")
-
-            self.dataset = Dataset(
-                args.prompt_data,
-                tokenizer=tokenizer,
-                max_length=args.rollout_max_prompt_len,
-                prompt_key=args.input_key,
-                label_key=args.label_key,
-                metadata_key=args.metadata_key,
-                tool_key=args.tool_key,
-                apply_chat_template=args.apply_chat_template,
-                seed=args.rollout_seed,
-            )
-            if self.args.rollout_shuffle:
-                self.dataset.shuffle(self.epoch_id)
-        else:
-            self.dataset = None
-
         self.generate_rollout = load_function(self.args.rollout_function_path)
         self.eval_generate_rollout = load_function(self.args.eval_function_path)
         print(f"import {self.args.rollout_function_path} as generate_rollout function.")
