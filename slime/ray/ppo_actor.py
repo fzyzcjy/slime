@@ -55,6 +55,9 @@ class TrainRayActor(RayActor):
         args.local_rank = args.rank % torch.cuda.device_count()
         torch.cuda.set_device(f"cuda:{args.local_rank}")
 
+    def get_master_addr_and_port(self):
+        return self.master_addr, self.master_port
+
     @abc.abstractmethod
     def sleep(self, tags):
         raise NotImplementedError

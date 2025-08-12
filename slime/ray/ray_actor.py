@@ -15,6 +15,3 @@ class RayActor:
             port += 1
 
         return address, port
-
-    def get_master_addr_and_port(self):
-        return self.master_addr, self.master_port
