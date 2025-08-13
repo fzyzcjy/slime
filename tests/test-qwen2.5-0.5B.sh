@@ -37,7 +37,7 @@ ROLLOUT_ARGS=(
    --num-rollout 3000
    --rollout-batch-size 32
    --n-samples-per-prompt 8
-   --rollout-max-response-len 30
+   --rollout-max-response-len 1024
    --rollout-temperature 0.8
 
    --over-sampling-batch-size 64
@@ -47,10 +47,10 @@ ROLLOUT_ARGS=(
 )
 
 EVAL_ARGS=(
-   --eval-interval 1
+   --eval-interval 20
    --eval-prompt-data gsm8k gsm8k/test.parquet
    --n-samples-per-eval-prompt 1
-   --eval-max-response-len 30
+   --eval-max-response-len 1024
    --eval-top-k 1
 )
 
@@ -109,7 +109,7 @@ MISC_ARGS=(
 )
 
 # launch the master node of ray in container
-ray start --head --node-ip-address ${MASTER_ADDR} --num-gpus 4 --disable-usage-stats
+ray start --head --node-ip-address ${MASTER_ADDR} --num-gpus 2 --disable-usage-stats
 
 ray job submit --address="http://127.0.0.1:8265" \
    --runtime-env-json='{
@@ -120,7 +120,7 @@ ray job submit --address="http://127.0.0.1:8265" \
    }' \
    -- python3 train.py \
    --actor-num-nodes 1 \
-   --actor-num-gpus-per-node 4 \
+   --actor-num-gpus-per-node 2 \
    --colocate \
    ${MODEL_ARGS[@]} \
    ${CKPT_ARGS[@]} \
