@@ -47,7 +47,6 @@ ROLLOUT_ARGS=(
 
    # NOTE MODIFIED ADD
    --partial-rollout
-   --over-sampling-batch-size 350
 )
 
 EVAL_ARGS=(
