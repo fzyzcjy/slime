@@ -37,7 +37,7 @@ ROLLOUT_ARGS=(
    --num-rollout 3000
    --rollout-batch-size 32
    --n-samples-per-prompt 8
-   --rollout-max-response-len 1024
+   --rollout-max-response-len 30
    --rollout-temperature 0.8
 
    --over-sampling-batch-size 64
@@ -50,10 +50,10 @@ ROLLOUT_ARGS=(
 )
 
 EVAL_ARGS=(
-   --eval-interval 20
+   --eval-interval 1
    --eval-prompt-data gsm8k gsm8k/test.parquet
    --n-samples-per-eval-prompt 1
-   --eval-max-response-len 1024
+   --eval-max-response-len 30
    --eval-top-k 1
 )
 
