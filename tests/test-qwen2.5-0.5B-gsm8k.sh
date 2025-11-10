@@ -40,14 +40,10 @@ ROLLOUT_ARGS=(
    --rollout-max-response-len 1024
    --rollout-temperature 0.8
 
-   --over-sampling-batch-size 64
-   --dynamic-sampling-filter-path slime.rollout.filter_hub.dynamic_sampling_filters.check_reward_nonzero_std
-
    --global-batch-size 256
 )
 
 EVAL_ARGS=(
-   --eval-interval 20
    --eval-prompt-data gsm8k gsm8k/test.parquet
    --n-samples-per-eval-prompt 1
    --eval-max-response-len 1024
@@ -109,7 +105,7 @@ MISC_ARGS=(
 )
 
 # launch the master node of ray in container
-ray start --head --node-ip-address ${MASTER_ADDR} --num-gpus 4 --disable-usage-stats
+ray start --head --node-ip-address ${MASTER_ADDR} --num-gpus 2 --disable-usage-stats
 
 ray job submit --address="http://127.0.0.1:8265" \
    --runtime-env-json='{
@@ -131,4 +127,9 @@ ray job submit --address="http://127.0.0.1:8265" \
    ${PERF_ARGS[@]} \
    ${EVAL_ARGS[@]} \
    ${SGLANG_ARGS[@]} \
-   ${MISC_ARGS[@]}
+   ${MISC_ARGS[@]} \
+   --save-interval 2 \
+   --load /root/Qwen2.5-0.5B-Instruct_slime/ \
+   --save /root/Qwen2.5-0.5B-Instruct_slime/ \
+   --rollout-max-response-len 200 \
+   --actor-num-gpus-per-node 2
